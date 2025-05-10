@@ -300,6 +300,41 @@ def join_game(game_id):
     finally:
         conn.close()
 
+
+@app.route('/games/<game_id>/status', methods=['GET'])
+def get_game_status(game_id):
+    """
+    Endpoint to check the status of a game without joining it.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    try:
+        # Check if game exists
+        cursor.execute("SELECT game_id, list_id, player1_id, player2_id, game_names, target_name FROM games WHERE game_id = ?", 
+                     (game_id,))
+        game = cursor.fetchone()
+        if not game:
+            return jsonify({"error": "Game not found"}), 404
+            
+        # Return game details
+        game_names = json.loads(game['game_names'])
+        
+        return jsonify({
+            "gameId": game_id,
+            "listId": game['list_id'],
+            "player1Id": game['player1_id'],
+            "player2Id": game['player2_id'],
+            "gameNames": game_names,
+            "targetName": game['target_name']
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+        
 # Initialize the database when the server starts
 init_db()
 
